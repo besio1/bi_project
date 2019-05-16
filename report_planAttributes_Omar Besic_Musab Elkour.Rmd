@@ -1,0 +1,40 @@
+---
+title: "Analysis of planAttributes.csv"
+author: "Omar Besic und Musab Elkour" 
+date: "16 Mai 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+### Wer?
+Das **Center for Medicare & Medicaid Services (CMS)** setzt sich für mehr Transparenz in der "Health Insurance Exchange" ein.
+
+Während Informationen über Gesundheitspläne wie Leistungen, Zuzahlungen, Prämien und geografische Abdeckung auf Healthcare.gov öffentlich zugänglich sind, veröffentlicht CMS auch herunterladbare **Public Use Files (PUFs)**, damit Forscher und andere Interessengruppen leichter auf Austauschdaten zugreifen können.
+
+### Was?
+Die Börsen-PUFs beinhalten Informationen auf Plan- und Herausgeberebene für zertifizierte **Qualified Health Plans (QHPs)** und **Stand-Alone Dental Plans (SADPs)**, die Einzelpersonen und Kleinunternehmen über die Krankenversicherungsbörse angeboten werden.
+
+```{r,include=FALSE}
+library(ggplot2)
+library(readr)
+library(dplyr) 
+library(choroplethr)
+library(extrafont)
+library(extrafontdb)
+library(RColorBrewer)
+library(scales)
+library(gridExtra)
+library(choroplethrMaps)
+```
+
+### Der Dataset - ein kurzer Ueberblick
+
+```{r, echo=FALSE}
+# import data with help of the readr package and reads comma delimited files
+planAttributes <- read.csv("PlanAttributes.csv", stringsAsFactors = FALSE)
+names(planAttributes)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

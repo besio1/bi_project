@@ -9,14 +9,14 @@ library(scales)
 library(gridExtra)
 library(choroplethrMaps)
 
-setwd("C:/Users/omarb/Desktop/Studium/6. Semester/
-      06_Business Intelligence im Spital/Projekt/bi_project")
+##setwd("C:/Users/omarb/Desktop/Studium/6. Semester/
+##      06_Business Intelligence im Spital/Projekt/bi_project")
 
 # import data with help of the readr package and reads comma delimited files
 planAttributes <- read.csv("PlanAttributes.csv", stringsAsFactors = FALSE)
 
-planAttributes <- planAttributes %>% filter(planAttributes$BusinessYear == 2014)
-planAttributes <- planAttributes %>% filter(planAttributes$BusinessYear == 2016)
+# planAttributes <- planAttributes %>% filter(planAttributes$BusinessYear == 2014)
+# planAttributes <- planAttributes %>% filter(planAttributes$BusinessYear == 2016)
 
 # Maximum Out of Pocket for Medical and Drug EHB Benefits (Total),
 # In Network (Tier 1), Family
@@ -45,7 +45,6 @@ ggplot(planAttributes, aes(x = planAttributes$moop)) + geom_histogram()
 # There’s a lot of plans in there that have a zero family MOOP. That’s not accurate. 
 # I will only stick to plans that actually have a dollar amount.
 moop <- subset(planAttributes, moop > 0)
-ggplot(planAttributes, aes(x = planAttributes$moop)) + geom_histogram()
 
 # choroplethr is used for plotting maps
 # I’m going to map this to see which states have the worst MOOP on average for a family. 
