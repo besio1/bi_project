@@ -9,8 +9,13 @@ library(scales)
 library(gridExtra)
 library(choroplethrMaps)
 
+##Setwd for omar besic 
 ##setwd("C:/Users/omarb/Desktop/Studium/6. Semester/
 ##      06_Business Intelligence im Spital/Projekt/bi_project")
+
+##Setwd for musab elkour 
+##setwd("C:/dev/bi_project")
+
 
 # import data with help of the readr package and reads comma delimited files
 planAttributes <- read.csv("PlanAttributes.csv", stringsAsFactors = FALSE)
