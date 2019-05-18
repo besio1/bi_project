@@ -1,7 +1,7 @@
 ---
 title: "Analysis of planAttributes.csv"
 author: "Omar Besic und Musab Elkour" 
-date: "16 Mai 2019"
+date: "23 Mai 2019"
 output: html_document
 ---
 
@@ -15,6 +15,13 @@ Während Informationen über Gesundheitspläne wie Leistungen, Zuzahlungen, Prä
 
 ### Was?
 Die Börsen-PUFs beinhalten Informationen auf Plan- und Herausgeberebene für zertifizierte **Qualified Health Plans (QHPs)** und **Stand-Alone Dental Plans (SADPs)**, die Einzelpersonen und Kleinunternehmen über die Krankenversicherungsbörse angeboten werden.
+
+### Vorgehensweise 
+1) Aufgabenstellung analysiert 
+2) Kaggle Account erstellt + Daten extrahiert 
+3) Daten bereinigt + in R integriert 
+4) Daten analysiert und Kennzahlen definiert für die Auswertung 
+5) Einarbeitung in RMarkdown 
 
 ```{r,include=FALSE, echo=FALSE}
 library(ggplot2)
