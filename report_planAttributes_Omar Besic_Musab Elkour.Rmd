@@ -16,7 +16,7 @@ Während Informationen über Gesundheitspläne wie Leistungen, Zuzahlungen, Prä
 ### Was?
 Die Börsen-PUFs beinhalten Informationen auf Plan- und Herausgeberebene für zertifizierte **Qualified Health Plans (QHPs)** und **Stand-Alone Dental Plans (SADPs)**, die Einzelpersonen und Kleinunternehmen über die Krankenversicherungsbörse angeboten werden.
 
-```{r,include=FALSE}
+```{r,include=FALSE, echo=FALSE}
 library(ggplot2)
 library(readr)
 library(dplyr) 
@@ -27,14 +27,22 @@ library(RColorBrewer)
 library(scales)
 library(gridExtra)
 library(choroplethrMaps)
+library(knitr)
+library(kableExtra)
 ```
 
 ### Der Dataset - ein kurzer Ueberblick
+In diesem Bericht werden folgende Kennzahlen genauer analysiert:
+**TEHBInnTier1FamilyMOOP** -> Spalte 159
+**xy**
 
 ```{r, echo=FALSE}
 # import data with help of the readr package and reads comma delimited files
 planAttributes <- read.csv("PlanAttributes.csv", stringsAsFactors = FALSE)
-names(planAttributes)
+
+x <- knitr::kable(planAttributes[5,158:160], "html")
+column_spec(x, 1:2, width = "20em", bold = TRUE, italic = TRUE)
+
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
