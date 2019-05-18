@@ -43,12 +43,40 @@ In diesem Bericht werden folgende Kennzahlen genauer analysiert:
 **TEHBInnTier1FamilyMOOP** -> Spalte 159
 **xy**
 
+
+# MOOP Spalte Analyse mit Histogram
 ```{r, echo=FALSE}
+
 # import data with help of the readr package and reads comma delimited files
 planAttributes <- read.csv("PlanAttributes.csv", stringsAsFactors = FALSE)
 
 x <- knitr::kable(planAttributes[5,158:160], "html")
 column_spec(x, 1:2, width = "20em", bold = TRUE, italic = TRUE)
+
+# Maximum Out of Pocket for Medical and Drug EHB Benefits (Total),
+# In Network (Tier 1), Family
+# The max out of pocket is the amount of money that the family would 
+# have to pay before the insurance covers everything 100%
+# Give me the TEHBInnTier1FamilyMOOP column just for a short glimpse
+planAttributes <- planAttributes %>% select(TEHBInnTier1FamilyMOOP)
+
+# replace all "," with " " in TEHBInnTier1FamilyMOOP
+# as example: given = $12,600 BUT wanted = $12600
+planAttributes$TEHBInnTier1FamilyMOOP<- gsub(',', '', planAttributes$TEHBInnTier1FamilyMOOP)
+
+# replace all "\\$" with " " in TEHBInnTier1FamilyMOOP
+# as example: given = $12600 BUT wanted = 12600
+planAttributes$TEHBInnTier1FamilyMOOP<- gsub('\\$', '', planAttributes$TEHBInnTier1FamilyMOOP)
+
+# assign (and convert to numeric) the maximum out of pocket column to planAttributes$moop
+planAttributes$moop<- as.numeric(planAttributes$TEHBInnTier1FamilyMOOP)
+
+# fill the blank cells with 0
+planAttributes$moop[is.na(planAttributes$moop)] <- 0
+
+# plot histogram of moop
+ggplot(planAttributes, aes(x = planAttributes$moop)) + geom_histogram()
+
 
 ```
 
