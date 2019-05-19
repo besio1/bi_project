@@ -102,9 +102,10 @@ m %>% addPolygons(
     fillOpacity = 0.7,
     bringToFront = TRUE))
 
+
+
 labels <- sprintf(
-  "<strong>%s</strong><br/>%s people / mi<sup>2</sup>",
-  state.name, state.name
+  paste0("State: ", state.name)
 ) %>% lapply(htmltools::HTML)
 
 m <- m %>% addPolygons(
