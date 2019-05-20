@@ -49,7 +49,7 @@ barplot(counts, main="The coinsurance for the sample SBC scenario of having diab
         xlab="Dollar Amount", ylab="Counts")
 
 # plot histogram of coinsurance dollar amount (x axis) and count in (y axis)
-ggplot(hc, aes(x = hc$coinsurance) + geom_histogram(color="green"))
+ggplot(hc, aes(x = hc$coinsurance)) + geom_histogram(color="green")
 
 
 #list aggregation of the mean of the coinsurance with the statecode and print it 
@@ -61,8 +61,10 @@ names(df) <- c("state", "coinsurance")
 df
 
 
+# converts states abbreviations
+source("function_stateFromLower.R")
 #calling the states from the function stateFromLower 
-df$region<-stateFromLower(df$state)
+df$region<-stateFromLower(df$Group.1)
 df$value <- df$overall
 
 #get summary of the states, coinsurance and region (Length, Median, mean...)
@@ -102,45 +104,59 @@ choro$ggplot_scale = scale_fill_gradientn(name = "Dollar amount", colours = myPa
 choro$render()
 #------------------------- END choro Map Functions ------------------------------------------------
 
-
+#subset the data for reasons that will become clear. Here use the 2014 and 2015 data.
+#to check if the coinsurance has gotten higher or not 
 coinsurance <- subset(coinsurance, BusinessYear == "2014")
 dim(coinsurance)
 
 coinsurance <- subset(coinsurance, BusinessYear == "2015")
 dim(coinsurance)
 
+
+#----------------- geograph --------
 library(tigris)
 library(leaflet)
 library(geojson)
 
-states <- geojsonio::geojson_read("json/us-states.geojson", what = "sp")
+#In this case, we will use the geojsonio package to load the data into sp objects, which will let us easily manipulate the geographic features, and their properties, in R.
+# transfrom .json file into a spatial polygons data frame
+states <- geojsonio::geojson_read(x = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json"
+                                  , what = "sp")
 class(states)
-
 names(states)
 
+#a basic map with just the outline of the states
 m <- leaflet(states) %>%
   setView(-96, 37.8, 4) %>%
   addProviderTiles("MapBox", options = providerTileOptions(
     id = "mapbox.light",
     accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN')))
 
+#We've saved the basic basemap as a separate variable m so we can easily iterate on the addPolygons call 
+#call addPolygons with no additional arguments -- To add uniform polygons with default styling
 m %>% addPolygons()
 
+#First, we'll define the bins. This is a numeric vector that defines the boundaries between intervals 
 bins <- c(0, 10, 20, 50, 100, 200, 500, 1000, Inf)
+
+#Then, we'll call colorBin to generate a palette function that maps the RColorBrewer "YlOrRd" colors to our bins.
 pal <- colorBin("YlOrRd", domain = states$density, bins = bins)
 
-myPalette <- colorRampPalette(brewer.pal(9, "Reds"))
 
+#Adding Color to the map 
+#Finally, we'll modify addPolygons to use the palette function and the density values to generate a vector of colors for fillColor, and also add some other static style properties.
 m %>% addPolygons(
-  fillColor = myPalette(9),
+  fillColor = ~pal(density),
   weight = 2,
   opacity = 1,
   color = "white",
   dashArray = "3",
   fillOpacity = 0.7)
 
+#Adding interaction 
+#make the polygons highlight as the mouse passes over them. The addPolygon function has a highlight argument that makes this simple
 m %>% addPolygons(
-  fillColor = myPalette(9),
+  fillColor = ~pal(density),
   weight = 2,
   opacity = 1,
   color = "white",
@@ -154,13 +170,15 @@ m %>% addPolygons(
     bringToFront = TRUE))
 
 
-
+#Custom infos 
+#We'll generate the labels by handcrafting some HTML, and passing it to lapply(htmltools::HTML) so that Leaflet knows to treat each label as HTML instead of as plain text. We'll also set some label options to improve the style of the label element itself.
 labels <- sprintf(
-  paste0("State: ", state.name)
-) %>% lapply(htmltools::HTML)
+  "<strong>%s</strong><br/>%g people / mi<sup>2</sup> <br/> coinsurance 2014",
+  states$name, states$density
+  )  %>% lapply(htmltools::HTML)
 
 m <- m %>% addPolygons(
-  fillColor = myPalette(9),
+  fillColor = ~pal(density),
   weight = 2,
   opacity = 1,
   color = "white",
@@ -179,5 +197,7 @@ m <- m %>% addPolygons(
     direction = "auto"))
 m
 
-m %>% addLegend(pal = pal, values = myPalette(9), opacity = 0.7, title = "amount of dollar",
+
+#add a legend. Because we chose to color our map using colorBin, the addLegend function makes it particularly easy to add a legend with the correct colors and intervals.
+m %>% addLegend(pal = pal, values = ~pal(density), opacity = 0.7, title = "amount of dollar",
                position = "bottomright")
