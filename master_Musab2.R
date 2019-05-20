@@ -173,8 +173,12 @@ m %>% addPolygons(
 #Custom infos 
 #We'll generate the labels by handcrafting some HTML, and passing it to lapply(htmltools::HTML) so that Leaflet knows to treat each label as HTML instead of as plain text. We'll also set some label options to improve the style of the label element itself.
 labels <- sprintf(
-  "<strong>%s</strong><br/>%g people / mi<sup>2</sup> <br/> coinsurance 2014",
-  states$name, states$density
+  paste0("<strong>", states$name, 
+         "</strong><br />Densitiy: ", states$density,
+         "<br /> Region: ", df$region,
+         "<br /> Having Diabetes Coinsurance mean: ", mean(hc$coinsurance),
+         "<br /> Businessyear: ", hc$BusinessYear
+         )
   )  %>% lapply(htmltools::HTML)
 
 m <- m %>% addPolygons(
