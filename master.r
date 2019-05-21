@@ -8,10 +8,12 @@ library(RColorBrewer)
 library(scales)
 library(gridExtra)
 library(choroplethrMaps)
+library(formattable)
+library(knitr)
+library(kableExtra)
 
 ##Setwd for omar besic 
-##setwd("C:/Users/omarb/Desktop/Studium/6. Semester/
-##      06_Business Intelligence im Spital/Projekt/bi_project")
+setwd("C:/Users/omarb/Desktop/Studium/6. Semester/06_Business Intelligence im Spital/Projekt/bi_project")
 
 ##Setwd for musab elkour 
 ##setwd("C:/dev/bi_project")
@@ -20,15 +22,21 @@ library(choroplethrMaps)
 # import data with help of the readr package and reads comma delimited files
 planAttributes <- read.csv("PlanAttributes.csv", stringsAsFactors = FALSE)
 
-# planAttributes <- planAttributes %>% filter(planAttributes$BusinessYear == 2014)
-# planAttributes <- planAttributes %>% filter(planAttributes$BusinessYear == 2016)
+names(planAttributes) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")
+                , fixed_thead = list(enabled = T, background = "yellow"))
+
+
+
+# names(planAttributes)
 
 # Maximum Out of Pocket for Medical and Drug EHB Benefits (Total),
 # In Network (Tier 1), Family
 # The max out of pocket is the amount of money that the family would 
 # have to pay before the insurance covers everything 100%
 # Give me the TEHBInnTier1FamilyMOOP column just for a short glimpse
-planAttributes <- planAttributes %>% select(TEHBInnTier1FamilyMOOP)
+planAttributes <- planAttributes %>% select(TEHBInnTier1FamilyMOOP) %>% filter(planAttributes$BusinessYear == "2015")
 
 # replace all "," with " " in TEHBInnTier1FamilyMOOP
 # as example: given = $12,600 BUT wanted = $12600
@@ -44,12 +52,12 @@ planAttributes$moop<- as.numeric(planAttributes$TEHBInnTier1FamilyMOOP)
 # fill the blank cells with 0
 planAttributes$moop[is.na(planAttributes$moop)] <- 0
 
-# plot histogram of moop
-ggplot(planAttributes, aes(x = planAttributes$moop)) + geom_histogram()
-
 # There’s a lot of plans in there that have a zero family MOOP. That’s not accurate. 
 # I will only stick to plans that actually have a dollar amount.
-moop <- subset(planAttributes, moop > 0)
+planAttributes <- subset(planAttributes, planAttributes$moop != 0)
+
+# plot histogram of moop
+ggplot(planAttributes, aes(x = planAttributes$moop)) + geom_histogram()
 
 # choroplethr is used for plotting maps
 # I’m going to map this to see which states have the worst MOOP on average for a family. 

@@ -9,19 +9,19 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 ### Wer?
-Das **Center for Medicare & Medicaid Services (CMS)** setzt sich für mehr Transparenz in der "Health Insurance Exchange" ein.
+Das **"Centers for Medicare & Medicaid Services (CMS) Center for Consumer Information & Insurance Oversight (CCIIO)** veröffentlicht sogenannte Exchange PUFs, um Transparenz und Zugang über Qualified Health Plans (QHPs) und Stand-alone Dental Plans (SADPs) zu schaffen. Diese werden Einzelpersonen und Kleinunternehmen über die Krankenversicherungsbörse angeboten.
 
-Während Informationen über Gesundheitspläne wie Leistungen, Zuzahlungen, Prämien und geografische Abdeckung auf Healthcare.gov öffentlich zugänglich sind, veröffentlicht CMS auch herunterladbare **Public Use Files (PUFs)**, damit Forscher und andere Interessengruppen leichter auf Austauschdaten zugreifen können.
+***Wir behandeln in diesem Bericht das "Planattribute" - PUF***
 
-### Was?
-Die Börsen-PUFs beinhalten Informationen auf Plan- und Herausgeberebene für zertifizierte **Qualified Health Plans (QHPs)** und **Stand-Alone Dental Plans (SADPs)**, die Einzelpersonen und Kleinunternehmen über die Krankenversicherungsbörse angeboten werden.
+Der Planattribute - PUF enthält unter Anderem Daten über maximale Selbstbehalte oder"Health Savings Accounts" der amerikanischen Bürger. Diese werden anonym auf Bundesebene geteilt und durch die jeweiligen Herausgeber der Versicherungen erfasst.
 
 ### Vorgehensweise 
-1) Aufgabenstellung analysiert 
-2) Kaggle Account erstellt + Daten extrahiert 
-3) Daten bereinigt + in R integriert 
-4) Daten analysiert und Kennzahlen definiert für die Auswertung 
-5) Einarbeitung in RMarkdown 
+1) Kontextanalyse der Daten
+2) Kaggle Account erstellt + Daten extrahiert
+3) Interessante Datensätze für die Auswertung herausgesucht
+4) Gewählte Datensätze bereinigt
+5) Bereinigte Datensätze manipuliert
+5) Erstellen des Reports in RMarkdown
 
 ```{r,include=FALSE, echo=FALSE}
 library(ggplot2)
@@ -38,13 +38,32 @@ library(knitr)
 library(kableExtra)
 ```
 
-### Der Dataset - ein kurzer Ueberblick
-In diesem Bericht werden folgende Kennzahlen genauer analysiert:
-**TEHBInnTier1FamilyMOOP** -> Spalte 159
-**xy**
+### Der Dataset - Ausschnitt des Headers
+Insgesamt gibt es 179 Kolonnen. Untenstehend wird ein Ausschnitt der vorhandenen Kolonnen gezeigt. Die Rot markierten Zeilen (entspricht im planAttributes.csv den Spalten) werden in diesem Bericht eingehender analysiert.
+
+```{r, echo=FALSE}
+planAttributes <- read.csv("PlanAttributes.csv", stringsAsFactors = FALSE)
+
+planAttributesColumns <- as_tibble(planAttributes)
+planAttributesColumns <- planAttributesColumns %>% select(110:130,150:165)
 
 
-# MOOP Spalte Analyse mit Histogram
+names(planAttributesColumns) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")
+                , fixed_thead = list(enabled = T, background = "dark"))  %>%
+  row_spec(cbind(12,31), bold = T, color = "white", background = "#D7261E")
+```
+
+### TEHBInnTier1FamilyMOOP
+**EHB = Essential Health Benefits**
+**Moop = Maximum out of pocket**
+
+Der maximale Selbstbehalt den man im Rahmen des Gesundheitsplans zahlen muss (für eine Familie). 
+
+Wir berechnen untenstehend
+
+
 ```{r, echo=FALSE}
 
 # import data with help of the readr package and reads comma delimited files
@@ -83,7 +102,6 @@ ggplot(planAttributes, aes(x = planAttributes$moop)) + geom_histogram()
 
 # Analyse: Beträge der Deckungskosten der Mitversicherung für das Muster-SBC-Szenario von Diabetes
 ```{r, echo=FALSE}
-
 library(ggplot2) 
 library(readr) 
 library(dplyr)
@@ -94,11 +112,10 @@ library(choroplethr)
 
 
 ##Setwd for omar besic 
-##setwd("C:/Users/omarb/Desktop/Studium/6. Semester/
-##      06_Business Intelligence im Spital/Projekt/bi_project")
+setwd("C:/Users/omarb/Desktop/Studium/6. Semester/06_Business Intelligence im Spital/Projekt/bi_project")
 
 ##Setwd for musab elkour 
-setwd("C:/dev/bi_project")
+# setwd("C:/dev/bi_project")
 
 #import data with help of the readr package and reads comma delimited files
 hc <- read.csv("PlanAttributes.csv", stringsAsFactors = FALSE)
