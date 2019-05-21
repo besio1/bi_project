@@ -1,10 +1,8 @@
 ---
 title: "Analysis of planAttributes.csv"
-author: "Omar Besic und Musab Elkour"
+author: "Omar Besic und Musab Elkour" 
 date: "23 Mai 2019"
-output:
-  html_document: default
-  pdf_document: default
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -72,6 +70,7 @@ names(planAttributesColumns) %>%
 ### Der maximale Selbstbehalt den man im Rahmen des Gesundheitsplans zahlen muss (für eine Familie). 
 
 ### Wir berechnen untenstehend
+
 ```{r,include=FALSE, echo=FALSE}
 x <- knitr::kable(planAttributes[5,158:160], "html")
 column_spec(x, 1:2, width = "20em", bold = TRUE, italic = TRUE)
@@ -101,14 +100,19 @@ planAttributes$moop[is.na(planAttributes$moop)] <- 0
 
 
 ```{r, echo=FALSE}
+
 # plot histogram of moop
 ggplot(planAttributes, aes(x = planAttributes$moop)) + geom_histogram()
+
 
 ```
 
 
+
+
 # SBCHavingDiabetesCoinsurance
-# Analyse: Beträge der Deckungskosten der Mitversicherung für das Muster-SBC-Szenario von Diabetes
+## Analyse: Beträge der Deckungskosten der Mitversicherung für das Muster-SBC-Szenario von Diabetes
+
 ```{r,include=FALSE, echo=FALSE}
 #import data with help of the readr package and reads comma delimited files
 pa <- read.csv("PlanAttributes.csv", stringsAsFactors = FALSE)
@@ -146,6 +150,7 @@ counts <- table(pa$coinsurance)
 
 
 ```{r, echo=FALSE}
+
 #barplot of coinsurance
 barplot(counts, main="Deckungskosten der Mitversicherung für Diabeteserkrankte in 2014",
         xlab="Dollar Amount", ylab="Counts", col="green")
@@ -155,16 +160,22 @@ ggplot(pa, aes(x = pa$coinsurance)) + geom_histogram(col="black", fill="green")
 
 ```
 
+
+## Die Liste der StateCodes und Durchschnittsdeckungskosten 
+```{r,include=FALSE, echo=FALSE}
+#list aggregation of the mean of the coinsurance with the statecode and print it 
+df <- aggregate(pa$coinsurance, list(pa$StateCode), mean)
+names(df) <- c("state", "coinsurance")
+
+
+
+```
+
 ```{r, echo=FALSE}
+#Set the title of the printed aggregated list above with new labels and print it 
+df
 
-pa <- subset(pa, BusinessYear == "2015")
 
-#barplot of coinsurance
-barplot(counts, main="Deckungskosten der Mitversicherung für Diabeteserkrankte in 2014",
-        xlab="Dollar Amount", ylab="Counts", col="green")
-
-# plot histogram of coinsurance dollar amount (x axis) and count in (y axis)
-ggplot(pa, aes(x = pa$coinsurance)) + geom_histogram(col="black", fill="green")
 
 ```
 
