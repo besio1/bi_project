@@ -67,10 +67,10 @@ Insgesamt gibt es 179 Kolonnen. Untenstehend wird ein Ausschnitt der vorhandenen
 planAttributes <- read.csv("PlanAttributes.csv", stringsAsFactors = FALSE)
 
 # Setwd for omar besic 
-#setwd("C:/Users/omarb/Desktop/Studium/6. Semester/06_Business Intelligence im Spital/Projekt/bi_project")
+ setwd("C:/Users/omarb/Desktop/Studium/6. Semester/06_Business Intelligence im Spital/Projekt/bi_project")
 
 # Setwd for musab elkour 
- setwd("C:/dev/bi_project")
+# setwd("C:/dev/bi_project")
 
 # transform dataset as tibble. This easify the access to the columns and assign to planAttributesColumns
 planAttributesColumns <- as_tibble(planAttributes)
@@ -121,9 +121,11 @@ planAttributes$moop<- as.numeric(planAttributes$TEHBInnTier1FamilyMOOP)
 # fill the blank cells with 0
 planAttributes$moop[is.na(planAttributes$moop)] <- 0
 
+counts <- table(pa$coinsurance)
+
 ```
 
-### Verteilung des moop in den USA
+### Verteilung TEHBInnTier1FamilyMOOP
 Wir generieren ein Histogramm. Merken aber, dass das Histogramm durch die zu vielen 0 Werte verzerrt wird.
 Deshalb entfernen wir 0 Werte, um einen besser lesbares Histogramm zu erhalten.
 
@@ -144,7 +146,17 @@ plot1with0 + ggtitle("Verteilung der moop Beiträge in den USA ") + xlab("Beträ
 
 ```
 
-### Grafische Darstellung des moop in den USA (Interactive Map)
+### Tabellarische Liste der durchschnittlichen SBCHavingDiabetesCoinsurance pro State
+Hier haben wir die Liste aller StateCodes sowie die max out of pocket je Staat aufgelistet und zusammengefasst. Dies wird benötigt für die MAP Darstellung 
+```{r,include=FALSE, echo=FALSE}
+#list aggregation of the mean of the moop with the statecode and print it 
+df <- aggregate(planAttributes$moop, list(planAttributes$StateCode), mean)
+names(df) <- c("state", "moop")
+
+
+```
+
+### Interaktive Darstellung der durchschn. TEHBInnTier1FamilyMOOP pro State
 Nun zeigen wir die Verteilung der moop Beiträge auf die verschiedenen US Bundesstaaten verteilt.
 
 ```{r,include=FALSE, echo=FALSE}
@@ -292,7 +304,7 @@ counts <- table(pa$coinsurance)
 
 ```
 
-### Verteilung der Deckungskosten der Mitversicheung für Diabetes in den USA (Für das Jahr 2014)
+### Verteilung SBCHavingDiabetesCoinsurance
 Wir generieren ein Barplot und ein Histogramm. Merken aber, dass beide Diagramme durch die zu vielen 0 Werte verzerrt wird.
 Deshalb entfernen wir die 0 Werte, um besser lesbare Diagramme zu erhalten.
 ```{r, echo=FALSE}
@@ -309,7 +321,7 @@ plot + ggtitle("Deckungskosten der Mitversicherung für Diabeteserkrankte in 201
 ```
 
 
-### Die Liste der StateCodes und Durchschnittsdeckungskosten 
+### Tabellarische Liste der durchschnittlichen SBCHavingDiabetesCoinsurance pro State
 Hier haben wir die Liste aller StateCodes sowie die Durchschnittsdeckungskosten je Staat aufgelistet und zusammengefasst. Dies wird benötigt für die MAP Darstellung der Deckungskostenverteilung. 
 ```{r,include=FALSE, echo=FALSE}
 #list aggregation of the mean of the coinsurance with the statecode and print it 
@@ -328,7 +340,7 @@ df
 
 
 
-### Grafische Darstellung der Deckungskosten der Mitversicherung in den USA für das Jahr 2014 (Interactive Map)
+### Interaktive Darstellung der durchschn. SBCHavingDiabetesCoinsurance pro State
 Nun zeigen wir die Verteilung der Deckungskosten auf die verschiedenen US Bundesstaaten verteilt
 (mit Informationsfenster für jede Staat über die Deckungskosten sowie Staatsname und Businessyear).
 
