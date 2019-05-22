@@ -2,23 +2,29 @@
 title: "Analysis of planAttributes.csv"
 author: "Omar Besic und Musab Elkour" 
 date: "23 Mai 2019"
-output: html_document
+output: 
+  html_document:
+    theme: united
+    highlight: tango  
+    toc: true
+    toc_float:
+      collapsed: false
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-### Wer?
-Das **"Centers for Medicare & Medicaid Services (CMS) Center for Consumer Information & Insurance Oversight (CCIIO)** veröffentlicht sogenannte Exchange PUFs, um Transparenz und Zugang über Qualified Health Plans (QHPs) und Stand-alone Dental Plans (SADPs) zu schaffen. Diese werden Einzelpersonen und Kleinunternehmen über die Krankenversicherungsbörse angeboten.
+# Kontext
+Das "Centers for Medicare & Medicaid Services (CMS) Center for Consumer Information & Insurance Oversight (CCIIO) veröffentlicht sogenannte Exchange PUFs, um Transparenz und Zugang über Qualified Health Plans (QHPs) und Stand-alone Dental Plans (SADPs) zu schaffen. Diese werden Einzelpersonen und Kleinunternehmen über die Krankenversicherungsbörse angeboten.
 
-***Wir behandeln in diesem Bericht das "Planattribute" - PUF***
+**Wir behandeln in diesem Bericht das "Planattribute" - PUF**
 
 Der Planattribute - PUF enthält unter Anderem Daten über maximale Selbstbehalte oder"Health Savings Accounts" der amerikanischen Bürger. Diese werden anonym auf Bundesebene geteilt und durch die jeweiligen Herausgeber der Versicherungen erfasst.
 
-### Vorgehensweise 
+# Vorgehensweise 
 1) Kontextanalyse der Daten
 2) Kaggle Account erstellt + Daten extrahiert
-3) Interessante Datensätze für die Auswertung herausgesucht
+3) Interessante Datensätze für die Auswertung herausgesucht | Use Case definiert
 4) Gewählte Datensätze bereinigt
 5) Bereinigte Datensätze manipuliert
 5) Erstellen des Reports in RMarkdown
@@ -40,41 +46,57 @@ library(RColorBrewer)
 library(DT)
 ```
 
-### Der Dataset - Ausschnitt des Headers
+# Der Use Case
+John Doe ist an Diabetes erkrankt. Die Dialysen im Spital kosten 35'000 Dollar pro Jahr. Sein Arbeitgeber (University of California) hat ihn und seine Familie mit einem "family plan" versichert.
+
+Der **erste Selbstbehalt** beträgt 3'000 Dolar (sog. Deductible). Der **maximale Selbstbehalt** beträgt 15'000 Dollar.  Nachdem der erste Selbstbehalt von 3'000 Dolar aufgebraucht wurde, trägt John und seine Familie 20% der versicherten Kosten selbst (**coinsurance**) und zwar solang bis der maximale Selbstbehalt von 15'000 Dollar pro Jahr erreicht wurde. Alle versicherten Leistungen über 15'000 Dollar werden von der Versicherungsgesellschaft übernommen.
+
+1. Übersicht über die Begriffe
+* Erste Selbstbehalt       = Deductible
+* Maximale Selbstbehalt    = maximum out of pocket (moop)
+* 20% Teilnahme an Kosten  = coinsurance
+
+# Das Dataset
 Insgesamt gibt es 179 Kolonnen. Untenstehend wird ein Ausschnitt der vorhandenen Kolonnen gezeigt. Die Rot markierten Zeilen (entspricht im planAttributes.csv den Spalten) werden in diesem Bericht eingehender analysiert.
 
 ```{r, echo=FALSE}
+# Import Dataset
 planAttributes <- read.csv("PlanAttributes.csv", stringsAsFactors = FALSE)
 
-##Setwd for omar besic 
-#setwd("C:/Users/omarb/Desktop/Studium/6. Semester/06_Business Intelligence im Spital/Projekt/bi_project")
+# Setwd for omar besic 
+setwd("C:/Users/omarb/Desktop/Studium/6. Semester/06_Business Intelligence im Spital/Projekt/bi_project")
 
-##Setwd for musab elkour 
- setwd("C:/dev/bi_project")
+# Setwd for musab elkour 
+# setwd("C:/dev/bi_project")
 
+# transform dataset as tibble. This easify the access to the columns and assign to planAttributesColumns
 planAttributesColumns <- as_tibble(planAttributes)
-planAttributesColumns <- planAttributesColumns %>% select(110:130,150:165)
 
+# select all columns from 110 to 130 and 150 to 165 and assign to planAttributesColumns
+planAttributesColumns <- planAttributesColumns %>% select(118:122,155:163)
 
+# give me the names of planAttributesColumns and use kable function with pipes to beautify the output table
+# select row 12 and 31 and make backgorund red (#D7261E), note that the rows in the table represents 
+# the columns from the planAttributes
 names(planAttributesColumns) %>%
   kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive", "bordered")
                 , fixed_thead = list(enabled = T, background = "dark"))  %>%
-  row_spec(cbind(12,31), bold = T, color = "white", background = "#D7261E")
+   add_header_above("Ausschnitt der vorhandenen Spalten im planAttributes.csv", background = "#4caf50", bold = TRUE, color = "white")   %>%
+  row_spec(cbind(4,10), bold = T, color = "white", background = "#D7261E")
 ```
 
 # TEHBInnTier1FamilyMOOP
-## EHB = Essential Health Benefits
-## Moop = Maximum out of pocket
 
-### Der maximale Selbstbehalt den man im Rahmen des Gesundheitsplans zahlen muss (für eine Familie). 
+Der "TEHBInnTier1FamilyMOOP" ist der maximale Selbstbehalt (maximum out of pocket) den man im Rahmen des Gesundheitsplans für eine Familie zahlt. Wir werden diese Kennzahl genauer analysieren.
 
-### Wir berechnen untenstehend
+1. Dazu müssen wir die Kolonne "TEHBInnTier1FamilyMOOP" bereinigen:
+* Alle "," in den Zellen entfernen
+* Alle Dollarzeichen entfernen
+* Alle nicht nummerischen Werte in nummerische Umwandeln
+* Allen nummerischen Werte als 0 deklarieren
 
 ```{r,include=FALSE, echo=FALSE}
-x <- knitr::kable(planAttributes[5,158:160], "html")
-column_spec(x, 1:2, width = "20em", bold = TRUE, italic = TRUE)
-
 # Maximum Out of Pocket for Medical and Drug EHB Benefits (Total),
 # In Network (Tier 1), Family
 # The max out of pocket is the amount of money that the family would 
@@ -98,17 +120,70 @@ planAttributes$moop[is.na(planAttributes$moop)] <- 0
 
 ```
 
+### Verteilung des moop in den USA
+Wir generieren ein Histogramm. Merken aber, dass das Histogramm durch die zu vielen 0 Werte verzerrt wird.
+Deshalb entfernen wir 0 Werte, um einen besser lesbares Histogramm zu erhalten.
 
 ```{r, echo=FALSE}
 
-# plot histogram of moop
-ggplot(planAttributes, aes(x = planAttributes$moop)) + geom_histogram()
+# plot histogram of moop with 0
+plot1without0 <- ggplot(planAttributes, aes(x = planAttributes$moop)) + geom_histogram(col="black", fill="green")
+plot1without0 + ggtitle("Verteilung der moop Beiträge in den USA ") + xlab("Beträge") + ylab("Anzahl Verträge")
 
+
+# There’s a lot of plans in there that have a zero family MOOP. That’s not accurate. 
+# I will only stick to plans that actually have a dollar amount.
+planAttributes <- subset(planAttributes, planAttributes$moop != 0)
+
+# plot histogram of moop without 0
+plot1with0 <- ggplot(planAttributes, aes(x = planAttributes$moop)) + geom_histogram(col="black", fill="green")
+plot1with0 + ggtitle("Verteilung der moop Beiträge in den USA ") + xlab("Beträge") + ylab("Anzahl Verträge")
 
 ```
 
+### Grafische Darstellung des moop in den USA
+Nun zeigen wir die Verteilung der moop Beiträge auf die verschiedenen US Bundesstaaten verteilt.
 
+```{r, echo=FALSE}
+# choroplethr is used for plotting maps
+# I’m going to map this to see which states have the worst MOOP on average for a family. 
+# I used a function that turns state abbreviations to a format 
+# that choropleth can actually use.
+# aggregate from planAttributes$moop and group by list(planAttributes$StateCode), take mean
+planAttributes <- aggregate(planAttributes$moop, list(planAttributes$StateCode), mean)
 
+# converts states abbreviations
+source("function_stateFromLower.R")
+
+# For the data frame method, a data frame with columns corresponding to the grouping variables 
+# in by followed by aggregated columns from x. If the by has names, the non-empty times 
+# are used to label the columns in the results, with unnamed grouping variables being named 
+# Group.i for by[[i]]. -> in this case first group "Group.1" is group of all states
+planAttributes$region <- stateFromLower(planAttributes$Group.1)
+
+# assign planAttributes$x (means of moop by state) to planAttributes$value
+planAttributes$value <- planAttributes$x
+
+# generate new choro object
+?StateChoropleth
+choro = StateChoropleth$new(planAttributes)
+
+# set title to the new choro chart
+choro$title = "Average Max Out of Pocket"
+
+# The number of colors to use on the map. A value of 0 uses a divergent scale
+# (useful for visualizing negative and positive numbers), A value of 1 uses a continuous
+# scale (useful for visualizing outliers), and a value in [2, 9] will use that many quantiles.
+choro$set_num_colors(1)
+
+# These functions are useful for converting hand-designed `sequential' or `diverging' color 
+# schemes into continous color ramps eg for image and filled contour plots. 
+myPalette <- colorRampPalette(brewer.pal(9, "Reds"))
+
+choro$ggplot_polygon = geom_polygon(aes(fill = value), color = NA)
+choro$ggplot_scale = scale_fill_gradientn(name = "MOOP", colours = myPalette(9))
+choro$render()
+```
 
 # SBCHavingDiabetesCoinsurance
 ## Analyse: Beträge der Deckungskosten der Mitversicherung für das Muster-SBC-Szenario von Diabetes
