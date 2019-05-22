@@ -44,6 +44,9 @@ library(knitr)
 library(kableExtra)
 library(RColorBrewer)
 library(DT)
+library(tigris)
+library(leaflet)
+library(geojson)
 ```
 
 # Der Use Case
@@ -64,10 +67,10 @@ Insgesamt gibt es 179 Kolonnen. Untenstehend wird ein Ausschnitt der vorhandenen
 planAttributes <- read.csv("PlanAttributes.csv", stringsAsFactors = FALSE)
 
 # Setwd for omar besic 
-setwd("C:/Users/omarb/Desktop/Studium/6. Semester/06_Business Intelligence im Spital/Projekt/bi_project")
+#setwd("C:/Users/omarb/Desktop/Studium/6. Semester/06_Business Intelligence im Spital/Projekt/bi_project")
 
 # Setwd for musab elkour 
-# setwd("C:/dev/bi_project")
+ setwd("C:/dev/bi_project")
 
 # transform dataset as tibble. This easify the access to the columns and assign to planAttributesColumns
 planAttributesColumns <- as_tibble(planAttributes)
@@ -141,52 +144,118 @@ plot1with0 + ggtitle("Verteilung der moop Beiträge in den USA ") + xlab("Beträ
 
 ```
 
-### Grafische Darstellung des moop in den USA
+### Grafische Darstellung des moop in den USA (Interactive Map)
 Nun zeigen wir die Verteilung der moop Beiträge auf die verschiedenen US Bundesstaaten verteilt.
 
-```{r, echo=FALSE}
-# choroplethr is used for plotting maps
-# I’m going to map this to see which states have the worst MOOP on average for a family. 
-# I used a function that turns state abbreviations to a format 
-# that choropleth can actually use.
-# aggregate from planAttributes$moop and group by list(planAttributes$StateCode), take mean
-planAttributes <- aggregate(planAttributes$moop, list(planAttributes$StateCode), mean)
+```{r,include=FALSE, echo=FALSE}
+#In this case, we will use the geojsonio package to load the data into sp objects, which will let us easily manipulate the geographic features, and their properties, in R.
+# transfrom .json file into a spatial polygons data frame
+states <- geojsonio::geojson_read(x = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json"
+                                  , what = "sp")
+class(states)
+names(states)
 
-# converts states abbreviations
-source("function_stateFromLower.R")
+#a basic map with just the outline of the states
+map1 <- leaflet(states) %>%
+  setView(-96, 37.8, 4) %>%
+  addProviderTiles("MapBox", options = providerTileOptions(
+    id = "mapbox.light",
+    accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN')))
 
-# For the data frame method, a data frame with columns corresponding to the grouping variables 
-# in by followed by aggregated columns from x. If the by has names, the non-empty times 
-# are used to label the columns in the results, with unnamed grouping variables being named 
-# Group.i for by[[i]]. -> in this case first group "Group.1" is group of all states
-planAttributes$region <- stateFromLower(planAttributes$Group.1)
+#We've saved the basic basemap as a separate variable m so we can easily iterate on the addPolygons call 
+#call addPolygons with no additional arguments -- To add uniform polygons with default styling
+map1 %>% addPolygons()
 
-# assign planAttributes$x (means of moop by state) to planAttributes$value
-planAttributes$value <- planAttributes$x
+#First, we'll define the bins. This is a numeric vector that defines the boundaries between intervals 
+bins <- c(0, 100, 200, 500, 1000, 2000, 5000, 10000, Inf)
 
-# generate new choro object
-?StateChoropleth
-choro = StateChoropleth$new(planAttributes)
+#Then, we'll call colorBin to generate a palette function that maps the RColorBrewer "YlOrRd" colors to our bins.
+pal <- colorBin("YlGnBu", domain = planAttributes$moop, bins = bins)
 
-# set title to the new choro chart
-choro$title = "Average Max Out of Pocket"
 
-# The number of colors to use on the map. A value of 0 uses a divergent scale
-# (useful for visualizing negative and positive numbers), A value of 1 uses a continuous
-# scale (useful for visualizing outliers), and a value in [2, 9] will use that many quantiles.
-choro$set_num_colors(1)
+#Adding Color to the map 
+#Finally, we'll modify addPolygons to use the palette function to generate a vector of colors for fillColor, and also add some other static style properties.
+map1 %>% addPolygons(
+  fillColor = ~pal(planAttributes$moop),
+  weight = 2,
+  opacity = 1,
+  color = "white",
+  dashArray = "3",
+  fillOpacity = 0.7)
 
-# These functions are useful for converting hand-designed `sequential' or `diverging' color 
-# schemes into continous color ramps eg for image and filled contour plots. 
-myPalette <- colorRampPalette(brewer.pal(9, "Reds"))
+#Adding interaction 
+#make the polygons highlight as the mouse passes over them. The addPolygon function has a highlight argument that makes this simple
+map1 %>% addPolygons(
+  fillColor = ~pal(planAttributes$moop),
+  weight = 2,
+  opacity = 1,
+  color = "white",
+  dashArray = "3",
+  fillOpacity = 0.7,
+  highlight = highlightOptions(
+    weight = 5,
+    color = "#666",
+    dashArray = "",
+    fillOpacity = 0.7,
+    bringToFront = TRUE))
 
-choro$ggplot_polygon = geom_polygon(aes(fill = value), color = NA)
-choro$ggplot_scale = scale_fill_gradientn(name = "MOOP", colours = myPalette(9))
-choro$render()
+#Custom infos 
+#We'll generate the labels by handcrafting some HTML, and passing it to lapply(htmltools::HTML) so that Leaflet knows to treat each label as HTML instead of as plain text. We'll also set some label options to improve the style of the label element itself.
+labels <- sprintf(
+         paste0("<br /> State: ", states$name , 
+         "<br /> Moops: ", planAttributes$moop 
+         )
+  )  %>% lapply(htmltools::HTML)
+
+map1 <- map1 %>% addPolygons(
+  fillColor = ~pal(planAttributes$moop),
+  weight = 2,
+  opacity = 1,
+  color = "white",
+  dashArray = "3",
+  fillOpacity = 0.7,
+  highlight = highlightOptions(
+    weight = 5,
+    color = "#666",
+    dashArray = "",
+    fillOpacity = 0.7,
+    bringToFront = TRUE),
+  label = labels,
+  labelOptions = labelOptions(
+    style = list("font-weight" = "normal", padding = "3px 8px"),
+    textsize = "15px",
+    direction = "auto"))
+
+#illustrate the map with this line 
+map1
+
+
 ```
 
+
+```{r, echo=FALSE}
+
+#add a legend. Because we chose to color our map using colorBin, the addLegend function makes it particularly easy to add a legend with the correct colors and intervals.
+map1 %>% addLegend(pal = pal, values = ~pal(planAttributes$moop), opacity = 0.7, title = "Beträge in Dollar",
+               position = "bottomright")
+
+
+
+```
+
+
 # SBCHavingDiabetesCoinsurance
-## Analyse: Beträge der Deckungskosten der Mitversicherung für das Muster-SBC-Szenario von Diabetes
+Die "SBCHavingDiabetesCoinsurance" sind die Deckungskosten der Mitversicherung für das SBC Scenario für Diabetes.
+
+SBC = Zusammenfassung der Leistungen und Deckung. Liefert klare und konsistente Informationen, um zu verstehen, was abgedeckt ist und was es kostet.
+
+Wir werden diese Kennzahl genauer analysieren.
+
+1. Dazu müssen wir die Kolonne "SBCHavingDiabetesCoinsurance" bereinigen:
+* Alle "," in den Zellen entfernen
+* Alle Dollarzeichen entfernen
+* Alle nicht nummerischen Werte in nummerische Umwandeln
+* Allen nummerischen Werte als 0 deklarieren
 
 ```{r,include=FALSE, echo=FALSE}
 #import data with help of the readr package and reads comma delimited files
@@ -223,32 +292,138 @@ counts <- table(pa$coinsurance)
 
 ```
 
-
+### Verteilung der Deckungskosten der Mitversicheung für Diabetes in den USA (Für das Jahr 2014)
+Wir generieren ein Barplot und ein Histogramm. Merken aber, dass beide Diagramme durch die zu vielen 0 Werte verzerrt wird.
+Deshalb entfernen wir die 0 Werte, um besser lesbare Diagramme zu erhalten.
 ```{r, echo=FALSE}
 
 #barplot of coinsurance
 barplot(counts, main="Deckungskosten der Mitversicherung für Diabeteserkrankte in 2014",
-        xlab="Dollar Amount", ylab="Counts", col="green")
+        xlab="Beträge", ylab="Anzahl Verträge", col="green")
 
 # plot histogram of coinsurance dollar amount (x axis) and count in (y axis)
-ggplot(pa, aes(x = pa$coinsurance)) + geom_histogram(col="black", fill="green")
+plot <- ggplot(pa, aes(x = pa$coinsurance)) + geom_histogram(col="black", fill="green")
+plot + ggtitle("Deckungskosten der Mitversicherung für Diabeteserkrankte in 2014") + xlab("Beträge") + ylab("Anzahl Verträge")
+
 
 ```
 
 
-## Die Liste der StateCodes und Durchschnittsdeckungskosten 
+### Die Liste der StateCodes und Durchschnittsdeckungskosten 
+Hier haben wir die Liste aller StateCodes sowie die Durchschnittsdeckungskosten je Staat aufgelistet und zusammengefasst. Dies wird benötigt für die MAP Darstellung der Deckungskostenverteilung. 
 ```{r,include=FALSE, echo=FALSE}
 #list aggregation of the mean of the coinsurance with the statecode and print it 
 df <- aggregate(pa$coinsurance, list(pa$StateCode), mean)
 names(df) <- c("state", "coinsurance")
 
 
-
 ```
 
 ```{r, echo=FALSE}
+
 #Set the title of the printed aggregated list above with new labels and print it 
 df
+
+```
+
+
+
+### Grafische Darstellung der Deckungskosten der Mitversicherung in den USA für das Jahr 2014 (Interactive Map)
+Nun zeigen wir die Verteilung der Deckungskosten auf die verschiedenen US Bundesstaaten verteilt
+(mit Informationsfenster für jede Staat über die Deckungskosten sowie Staatsname und Businessyear).
+
+```{r,include=FALSE, echo=FALSE}
+#In this case, we will use the geojsonio package to load the data into sp objects, which will let us easily manipulate the geographic features, and their properties, in R.
+# transfrom .json file into a spatial polygons data frame
+states <- geojsonio::geojson_read(x = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json"
+                                  , what = "sp")
+class(states)
+names(states)
+
+#a basic map with just the outline of the states
+map <- leaflet(states) %>%
+  setView(-96, 37.8, 4) %>%
+  addProviderTiles("MapBox", options = providerTileOptions(
+    id = "mapbox.light",
+    accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN')))
+
+#We've saved the basic basemap as a separate variable m so we can easily iterate on the addPolygons call 
+#call addPolygons with no additional arguments -- To add uniform polygons with default styling
+map %>% addPolygons()
+
+#First, we'll define the bins. This is a numeric vector that defines the boundaries between intervals 
+bins <- c(0, 10, 20, 50, 100, 200, 500, 1000, Inf)
+
+#Then, we'll call colorBin to generate a palette function that maps the RColorBrewer "YlOrRd" colors to our bins.
+pal <- colorBin("YlGnBu", domain = pa$coinsurance, bins = bins)
+
+
+#Adding Color to the map 
+#Finally, we'll modify addPolygons to use the palette function to generate a vector of colors for fillColor, and also add some other static style properties.
+map %>% addPolygons(
+  fillColor = ~pal(pa$coinsurance),
+  weight = 2,
+  opacity = 1,
+  color = "white",
+  dashArray = "3",
+  fillOpacity = 0.7)
+
+#Adding interaction 
+#make the polygons highlight as the mouse passes over them. The addPolygon function has a highlight argument that makes this simple
+map %>% addPolygons(
+  fillColor = ~pal(pa$coinsurance),
+  weight = 2,
+  opacity = 1,
+  color = "white",
+  dashArray = "3",
+  fillOpacity = 0.7,
+  highlight = highlightOptions(
+    weight = 5,
+    color = "#666",
+    dashArray = "",
+    fillOpacity = 0.7,
+    bringToFront = TRUE))
+
+#Custom infos 
+#We'll generate the labels by handcrafting some HTML, and passing it to lapply(htmltools::HTML) so that Leaflet knows to treat each label as HTML instead of as plain text. We'll also set some label options to improve the style of the label element itself.
+labels <- sprintf(
+         paste0("<br /> State: ", states$name , 
+         "<br /> Businessyear: ", pa$BusinessYear,
+         "<br /> Coisurances: ", pa$coinsurance 
+         )
+  )  %>% lapply(htmltools::HTML)
+
+map <- map %>% addPolygons(
+  fillColor = ~pal(pa$coinsurance),
+  weight = 2,
+  opacity = 1,
+  color = "white",
+  dashArray = "3",
+  fillOpacity = 0.7,
+  highlight = highlightOptions(
+    weight = 5,
+    color = "#666",
+    dashArray = "",
+    fillOpacity = 0.7,
+    bringToFront = TRUE),
+  label = labels,
+  labelOptions = labelOptions(
+    style = list("font-weight" = "normal", padding = "3px 8px"),
+    textsize = "15px",
+    direction = "auto"))
+
+#illustrate the map with this line 
+map
+
+
+```
+
+
+```{r, echo=FALSE}
+
+#add a legend. Because we chose to color our map using colorBin, the addLegend function makes it particularly easy to add a legend with the correct colors and intervals.
+map %>% addLegend(pal = pal, values = ~pal(pa$coinsurance), opacity = 0.7, title = "Beträge in Dollar",
+               position = "bottomright")
 
 
 

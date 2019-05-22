@@ -65,8 +65,12 @@ df
 # converts states abbreviations
 source("function_stateFromLower.R")
 #calling the states from the function stateFromLower 
-df$region<-stateFromLower(df$Group1)
+df$region<-stateFromLower(df$Group.1)
 df$value <- df$overall
+
+if(stateFromLower(df$Group.1) != pa$StateCode) {
+  stateFromLower(df$Group.1) == "NA"
+}
 
 #get summary of the states, coinsurance and region (Length, Median, mean...)
 summary(df)
@@ -179,7 +183,7 @@ labels <- sprintf(
          
   )  %>% lapply(htmltools::HTML)
 
-xmap <- map %>% addPolygons(
+map <- map %>% addPolygons(
   fillColor = ~pal(pa$coinsurance),
   weight = 2,
   opacity = 1,
@@ -203,5 +207,5 @@ map
 
 
 #add a legend. Because we chose to color our map using colorBin, the addLegend function makes it particularly easy to add a legend with the correct colors and intervals.
-m %>% addLegend(pal = pal, values = ~pal(pa$coinsurance), opacity = 0.7, title = "amount of dollar",
+map %>% addLegend(pal = pal, values = ~pal(pa$coinsurance), opacity = 0.7, title = "amount of dollar",
                position = "bottomright")
