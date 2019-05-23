@@ -62,7 +62,7 @@ Der **erste Selbstbehalt** beträgt 3'000 Dolar (sog. Deductible). Der **maximal
 * Maximale Selbstbehalt    = maximum out of pocket (moop)
 * 20% Teilnahme an Kosten  = coinsurance
 
-John interessiert sich für die Gesamtsitatuion in den Vereinigten Staaten. Dazu hat er zwei Experten in R (Besic und Elkour) engagiert die ihn das Planattribute PUF genauer analysieren und veranschaulichen. Ihn interessiert vorallem die Selbstbehalte und die Coinsurance Rates in den einzelnen Bundesstaaten. 
+John interessiert sich für die Gesamtsituation in den Vereinigten Staaten. Dazu hat er zwei Experten in R (Besic und Elkour) engagiert die ihn das Planattribute PUF genauer analysieren und veranschaulichen. Ihn interessiert vorallem die Selbstbehalte und die Coinsurance Rates in den einzelnen Bundesstaaten. 
 
 # Das Dataset
 Insgesamt gibt es 179 Kolonnen. Untenstehend wird ein Ausschnitt der vorhandenen Kolonnen gezeigt. Die Rot markierten Zeilen (entspricht im planAttributes.csv den Spalten) werden in diesem Bericht eingehender analysiert.
@@ -255,7 +255,8 @@ map1 %>% addLegend(pal = pal, values = ~pal(planAttributes$moop), opacity = 0.7,
 # SBCHavingDiabetesCoinsurance
 Die "SBCHavingDiabetesCoinsurance" sind die Deckungskosten der Mitversicherung für das SBC Scenario für Diabetes.
 
-SBC = Zusammenfassung der Leistungen und Deckung. Liefert klare und konsistente Informationen, um zu verstehen, was abgedeckt ist und was es kostet.
+SBC (Summary of Benefits and Coverage):
+Zusammenfassung der Leistungen und Deckung. Liefert klare und konsistente Informationen, um zu verstehen, was abgedeckt ist und was es kostet.
 
 Wir werden diese Kennzahl genauer analysieren.
 
@@ -301,7 +302,7 @@ counts <- table(pa$coinsurance)
 ```
 
 ### Verteilung SBCHavingDiabetesCoinsurance
-Wir generieren ein Barplot und ein Histogramm. Merken aber, dass beide Diagramme durch die zu vielen 0 Werte verzerrt wird.
+Wir generieren ein Barplot und ein Histogramm. Merken aber, dass beide Diagramme durch die zu vielen 0 Werte verzerrt wird. Hier wurde nur das Jahr 2014 analysiert und betrachtet. 
 Deshalb entfernen wir die 0 Werte, um besser lesbare Diagramme zu erhalten.
 ```{r, echo=FALSE}
 
@@ -337,16 +338,11 @@ df
 
 
 ### Interaktive Darstellung der durchschn. SBCHavingDiabetesCoinsurance pro State
-Nun zeigen wir die Verteilung der Deckungskosten auf die verschiedenen US Bundesstaaten verteilt
+Nun zeigen wir die Verteilung der Deckungskosten auf die verschiedenen US Bundesstaaten verteilt für das Jahr 2014
 (mit Informationsfenster für jede Staat über die Deckungskosten sowie Staatsname und Businessyear).
 
 ```{r,include=FALSE, echo=FALSE}
-#In this case, we will use the geojsonio package to load the data into sp objects, which will let us easily manipulate the geographic features, and their properties, in R.
-# transfrom .json file into a spatial polygons data frame
-states <- geojsonio::geojson_read(x = "https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json"
-                                  , what = "sp")
-class(states)
-names(states)
+
 
 #a basic map with just the outline of the states
 map <- leaflet(states) %>%
